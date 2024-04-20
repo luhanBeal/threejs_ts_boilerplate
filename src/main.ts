@@ -6,10 +6,10 @@ import Stats from "three/addons/libs/stats.module.js";
 import { GUI } from "dat.gui";
 
 // Scene extends from Object3d (basic object in 3js)
-const scene = new THREE.Scene();
-scene.background = new THREE.CubeTextureLoader()
-  .setPath('https://sbcode.net/img/')
-  .load(['px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png']);
+// const scene = new THREE.Scene();
+// scene.background = new THREE.CubeTextureLoader()
+//   .setPath('https://sbcode.net/img/')
+//   .load(['px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png']);
 
 // scene examples
 // 0x refer to hex
@@ -50,22 +50,33 @@ const geometry = new THREE.BoxGeometry();
 const material = new THREE.MeshNormalMaterial({ wireframe: true });
 
 const cube = new THREE.Mesh(geometry, material);
-scene.add(cube);
+// only one mesh per scene (append the cube to last scene added)
+sceneA.add(cube);
+sceneB.add(cube);
+sceneC.add(cube);
 
 const stats = new Stats();
 document.body.appendChild(stats.dom);
 
+// add scenes to GUI 
+let activeScene = sceneA
+const setScene = {
+  sceneA: () => {
+    activeScene = sceneA
+  },
+  sceneB: () => {
+    activeScene = sceneB
+  },
+  sceneC: () => {
+    activeScene = sceneC
+  },
+}
+
 const gui = new GUI()
+gui.add(setScene, 'sceneA').name('Scene A')
+gui.add(setScene, 'sceneB').name('Scene B')
+gui.add(setScene, 'sceneC').name('Scene C')
 
-const cubeFolder = gui.addFolder('Cube')
-cubeFolder.add(cube.rotation, 'x', 0, Math.PI * 2)
-cubeFolder.add(cube.rotation, 'y', 0, Math.PI * 2)
-cubeFolder.add(cube.rotation, 'z', 0, Math.PI * 2)
-cubeFolder.open()
-
-const cameraFolder = gui.addFolder('Camera')
-cameraFolder.add(camera.position, 'z', 0, 20)
-cameraFolder.open()
 
 function animate() {
   requestAnimationFrame(animate);
@@ -78,7 +89,7 @@ function animate() {
 
   // all animation to analyse
   stats.update();
-  renderer.render(scene, camera);
+  renderer.render(activeScene, camera);
 }
 
 animate();
