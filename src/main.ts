@@ -5,7 +5,26 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import Stats from "three/addons/libs/stats.module.js";
 import { GUI } from "dat.gui";
 
+// Scene extends from Object3d (basic object in 3js)
 const scene = new THREE.Scene();
+scene.background = new THREE.CubeTextureLoader()
+  .setPath('https://sbcode.net/img/')
+  .load(['px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png']);
+
+// scene examples
+// 0x refer to hex
+const sceneA = new THREE.Scene()
+sceneA.background = new THREE.Color(0x123456)
+// static background
+const sceneB = new THREE.Scene()
+sceneB.background = new THREE.TextureLoader()
+  .load('https://sbcode.net/img/grid.png')
+// skybox -> set img to +x, -x, +y, -y, +z, -z
+const sceneC = new THREE.Scene()
+sceneC.background = new THREE.CubeTextureLoader()
+  .setPath('https://sbcode.net/img/')
+  .load(['px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png'])
+//sceneC.backgroundBlurriness = 0.5
 
 const camera = new THREE.PerspectiveCamera(
   75,
