@@ -1,8 +1,8 @@
-import './style.css'
-import * as THREE from 'three'
-import Stats from 'three/addons/libs/stats.module.js'
-import { GUI } from 'dat.gui'
-// commit test
+import './style.css';
+import * as THREE from 'three';
+import Stats from 'three/addons/libs/stats.module.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { GUI } from 'dat.gui';
 
 const scene = new THREE.Scene()
 scene.add(new THREE.GridHelper())
@@ -19,7 +19,9 @@ window.addEventListener('resize', () => {
   //camera.aspect = window.innerWidth / window.innerHeight
   camera.updateProjectionMatrix()
   renderer.setSize(window.innerWidth, window.innerHeight)
-})
+});
+
+new OrbitControls(camera, renderer.domElement);
 
 const geometry = new THREE.BoxGeometry()
 const material = new THREE.MeshNormalMaterial({ wireframe: true })
@@ -62,9 +64,14 @@ function animate() {
 
   camera.lookAt(0, 0.5, 0)
 
+  stats.begin();
+  cube.rotation.x += 0.1;
+  cube.rotation.y += 0.1;
+  stats.end();
+
   renderer.render(scene, camera)
 
-  stats.update()
+  // stats.update();
 }
 
 animate()
