@@ -2,6 +2,7 @@ import './style.css'
 import * as THREE from 'three'
 import Stats from 'three/addons/libs/stats.module.js'
 import { GUI } from 'dat.gui'
+// commit test
 
 const scene = new THREE.Scene()
 scene.add(new THREE.GridHelper())
