@@ -137,6 +137,13 @@ icosahedronFolder.add(icosahedronData, 'radius', 0.1, 10).onChange(regenerateIco
 icosahedronFolder.add(icosahedronData, 'detail', 0, 5).step(1).onChange(regenerateIcosahedronGeometry)
 icosahedronFolder.open()
 
+const points = []
+points.push(new THREE.Vector3(-5, 2, 4))
+points.push(new THREE.Vector3(5, 5, 5))
+let geometry = new THREE.BufferGeometry().setFromPoints(points)
+let line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: 0x888888 }))
+scene.add(line)
+
 function regenerateIcosahedronGeometry() {
   const newGeometry = new THREE.IcosahedronGeometry(icosahedronData.radius, icosahedronData.detail)
   icosahedron.geometry.dispose()
