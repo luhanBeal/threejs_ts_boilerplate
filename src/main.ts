@@ -6,55 +6,17 @@ import { GUI } from 'dat.gui'
 
 const scene = new THREE.Scene()
 scene.environment = new THREE.CubeTextureLoader().setPath('https://sbcode.net/img/').load(['px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png'])
-
-const axesHelper = new THREE.AxesHelper(5)
-scene.add(axesHelper)
+scene.background = new THREE.CubeTextureLoader().setPath('https://sbcode.net/img/').load(['px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png'])
 
 const gridHelper = new THREE.GridHelper()
-gridHelper.position.y = -1
 scene.add(gridHelper)
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-camera.position.set(0, 2, 7)
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100)
+camera.position.set(-1, 4, 2.5)
 
 const renderer = new THREE.WebGLRenderer({ antialias: true })
 renderer.setSize(window.innerWidth, window.innerHeight)
 document.body.appendChild(renderer.domElement)
-
-const controls = new OrbitControls(camera, renderer.domElement)
-controls.enableDamping = true
-
-const boxGeometry = new THREE.BoxGeometry()
-
-const sphereGeometry = new THREE.SphereGeometry()
-
-const icosahedronGeometry = new THREE.IcosahedronGeometry()
-
-const planeGeometry = new THREE.PlaneGeometry()
-
-const torusKnotGeometry = new THREE.TorusKnotGeometry()
-
-const material = new THREE.MeshStandardMaterial()
-
-const cube = new THREE.Mesh(boxGeometry, material)
-cube.position.set(5, 0, 0)
-scene.add(cube)
-
-const sphere = new THREE.Mesh(sphereGeometry, material)
-sphere.position.set(3, 0, 0)
-scene.add(sphere)
-
-const icosahedron = new THREE.Mesh(icosahedronGeometry, material)
-icosahedron.position.set(0, 0, 0)
-scene.add(icosahedron)
-
-const plane = new THREE.Mesh(planeGeometry, material)
-plane.position.set(-2, 0, 0)
-scene.add(plane)
-
-const torusKnot = new THREE.Mesh(torusKnotGeometry, material)
-torusKnot.position.set(-5, 0, 0)
-scene.add(torusKnot)
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight
@@ -62,36 +24,110 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight)
 })
 
+const controls = new OrbitControls(camera, renderer.domElement)
+controls.enableDamping = true
+
+const light = new THREE.DirectionalLight(undefined, Math.PI)
+light.position.set(1, 1, 1)
+scene.add(light)
+
+const data = { color: 0x00ff00, labelsVisible: true }
+
+const plane = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshBasicMaterial({ color: 0x00ff00 }))
+plane.rotation.x = -Math.PI / 2
+plane.visible = false
+scene.add(plane)
+
+const geometry = new THREE.IcosahedronGeometry(1, 1)
+
+const meshes = [
+  new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: data.color })),
+  new THREE.Mesh(geometry, new THREE.MeshNormalMaterial({ flatShading: true })),
+  new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({ color: data.color, flatShading: true })),
+  new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: data.color, flatShading: true })),
+]
+
+meshes[0].position.set(-3, 1, 0)
+meshes[1].position.set(-1, 1, 0)
+meshes[2].position.set(1, 1, 0)
+meshes[3].position.set(3, 1, 0)
+
+scene.add(...meshes)
+
 const stats = new Stats()
 document.body.appendChild(stats.dom)
 
-const options = {
-  side: {
-    FrontSide: THREE.FrontSide,
-    BackSide: THREE.BackSide,
-    DoubleSide: THREE.DoubleSide,
-  },
-}
-
 const gui = new GUI()
 
-const materialFolder = gui.addFolder('THREE.Material')
-materialFolder.add(material, 'transparent').onChange(() => (material.needsUpdate = true))
-materialFolder.add(material, 'opacity', 0, 1, 0.01)
-materialFolder.add(material, 'alphaTest', 0, 1, 0.01).onChange(() => updateMaterial())
-materialFolder.add(material, 'visible')
-materialFolder.add(material, 'side', options.side).onChange(() => updateMaterial())
-materialFolder.open()
+// colorPicker doesnt work very well with three, we need a lot of casting
+const meshBasicMaterialFolder = gui.addFolder('MeshBasicMaterial')
+meshBasicMaterialFolder.addColor(data, 'color').onChange(() => {
+  ; (meshes[0].material as THREE.MeshBasicMaterial).color.set(data.color)
+})
+meshBasicMaterialFolder.add(meshes[0].material, 'wireframe')
+meshBasicMaterialFolder.open()
 
-function updateMaterial() {
-  material.side = Number(material.side) as THREE.Side
-  material.needsUpdate = true
-}
+const meshNormalMaterialFolder = gui.addFolder('MeshNormalMaterial')
+meshNormalMaterialFolder.add(meshes[1].material as THREE.MeshNormalMaterial, 'flatShading').onChange(() => {
+  meshes[1].material.needsUpdate = true
+})
+meshNormalMaterialFolder.add(meshes[1].material, 'wireframe')
+meshNormalMaterialFolder.open()
+
+const meshPhongMaterialFolder = gui.addFolder('MeshPhongMaterial')
+meshPhongMaterialFolder.addColor(data, 'color').onChange(() => {
+  ; (meshes[2].material as THREE.MeshPhongMaterial).color.set(data.color)
+})
+meshPhongMaterialFolder.add(meshes[2].material as THREE.MeshPhongMaterial, 'flatShading').onChange(() => {
+  meshes[2].material.needsUpdate = true
+})
+meshPhongMaterialFolder.add(meshes[2].material, 'wireframe')
+meshPhongMaterialFolder.open()
+
+const meshStandardMaterialFolder = gui.addFolder('MeshStandardMaterial')
+meshStandardMaterialFolder.addColor(data, 'color').onChange(() => {
+  ; (meshes[3].material as THREE.MeshStandardMaterial).color.set(data.color)
+})
+meshStandardMaterialFolder.add(meshes[3].material as THREE.MeshStandardMaterial, 'flatShading').onChange(() => {
+  meshes[3].material.needsUpdate = true
+})
+meshStandardMaterialFolder.add(meshes[3].material, 'wireframe')
+meshStandardMaterialFolder.open()
+
+const lightFolder = gui.addFolder('Light')
+lightFolder.add(light, 'visible')
+lightFolder.open()
+
+const gridFolder = gui.addFolder('Grid')
+gridFolder.add(gridHelper, 'visible')
+gridFolder.open()
+
+const labelsFolder = gui.addFolder('Labels')
+labelsFolder.add(data, 'labelsVisible')
+labelsFolder.open()
+
+const labels = document.querySelectorAll<HTMLDivElement>('.label')
+
+let x, y
+const v = new THREE.Vector3()
 
 function animate() {
   requestAnimationFrame(animate)
 
   controls.update()
+
+  // set the position of labels
+  for (let i = 0; i < 4; i++) {
+    v.copy(meshes[i].position)
+    v.project(camera)
+
+    x = ((1 + v.x) / 2) * window.innerWidth - 50
+    y = ((1 - v.y) / 2) * window.innerHeight
+
+    labels[i].style.left = x + 'px'
+    labels[i].style.top = y + 'px'
+    labels[i].style.display = data.labelsVisible ? 'block' : 'none'
+  }
 
   renderer.render(scene, camera)
 
