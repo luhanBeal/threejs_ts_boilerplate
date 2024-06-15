@@ -14,10 +14,7 @@ light.angle = Math.PI / 16
 light.castShadow = true
 scene.add(light)
 
-// const helper = new THREE.SpotLightHelper(light)
-// scene.add(helper)
-
-new RGBELoader().load('img/symmetrical_garden_02_1k.hdr', (texture) => {
+new RGBELoader().load('img/venice_sunset_1k.hdr', (texture) => {
   texture.mapping = THREE.EquirectangularReflectionMapping
   scene.environment = texture
   scene.background = texture
@@ -27,10 +24,8 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerH
 camera.position.set(1.5, 0.75, 2)
 
 const renderer = new THREE.WebGLRenderer({ antialias: true })
-// Reduce the intensity of the light(exposure) on the enviroment
 renderer.toneMapping = THREE.ACESFilmicToneMapping
 renderer.toneMappingExposure = 0.1
-// -----
 renderer.shadowMap.enabled = true
 renderer.setSize(window.innerWidth, window.innerHeight)
 document.body.appendChild(renderer.domElement)
@@ -44,23 +39,23 @@ window.addEventListener('resize', () => {
 const controls = new OrbitControls(camera, renderer.domElement)
 controls.enableDamping = true
 
-// Lens flare image in the position of the light (555)
-const textureLoader = new THREE.TextureLoader()
-const textureFlare0 = textureLoader.load('https://cdn.jsdelivr.net/gh/Sean-Bradley/First-Car-Shooter@main/dist/client/img/lensflare0.png')
-
-const lensflare = new Lensflare()
-lensflare.addElement(new LensflareElement(textureFlare0, 1000, 0))
-light.add(lensflare)
-// ------------
-
 new GLTFLoader().load('models/suzanne_scene.glb', (gltf) => {
-  console.log(gltf)
-
   const suzanne = gltf.scene.getObjectByName('Suzanne') as THREE.Mesh
   suzanne.castShadow = true
 
   const plane = gltf.scene.getObjectByName('Plane') as THREE.Mesh
   plane.receiveShadow = true
+
+  const spotlight = gltf.scene.getObjectByName('Spot') as THREE.SpotLight
+  spotlight.intensity /= 500
+  spotlight.castShadow = true
+
+  const textureLoader = new THREE.TextureLoader()
+  const textureFlare0 = textureLoader.load('https://cdn.jsdelivr.net/gh/Sean-Bradley/First-Car-Shooter@main/dist/client/img/lensflare0.png')
+
+  const lensflare = new Lensflare()
+  lensflare.addElement(new LensflareElement(textureFlare0, 1000, 0))
+  spotlight.add(lensflare)
 
   scene.add(gltf.scene)
 })
