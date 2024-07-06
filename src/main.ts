@@ -1,16 +1,34 @@
 import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import Stats from 'three/addons/libs/stats.module.js'
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+// import Stats from 'three/addons/libs/stats.module.js'
+import { Lensflare, LensflareElement } from 'three/addons/objects/Lensflare.js'
 
 const scene = new THREE.Scene()
 
-const gridHelper = new THREE.GridHelper()
-gridHelper.position.y = -0.5
-scene.add(gridHelper)
+const light = new THREE.SpotLight(undefined, Math.PI * 1000)
+light.position.set(15, 15, 15)
+light.angle = Math.PI / 16
+light.castShadow = true
+scene.add(light)
+
+new RGBELoader().load('img/venice_sunset_1k.hdr', (texture) => {
+  texture.mapping = THREE.EquirectangularReflectionMapping
+  scene.environment = texture
+  scene.background = texture
+})
+
+// const gridHelper = new THREE.GridHelper()
+// gridHelper.position.y = -0.5
+// scene.add(gridHelper)
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100)
 camera.position.z = 2
+camera.position.y = 3
+camera.position.x = 3
+camera.lookAt(5, 5, 5)
 
 const renderer = new THREE.WebGLRenderer()
 renderer.setSize(window.innerWidth, window.innerHeight)
@@ -22,33 +40,17 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight)
 })
 
-// -- Information div added dinamicaly
-const info = document.createElement('div')
-info.style.cssText = 'position:absolute;bottom:10px;left:10px;color:white;font-family:monospace;font-size: 17px;filter: drop-shadow(1px 1px 1px #000000);'
-document.body.appendChild(info)
-
 const controls = new OrbitControls(camera, renderer.domElement)
 
 // -- CANT CHANGE JUST THE CAMERA, OrbitControls will reset the camera, we can do this instead and controls.update() on animate function
-// camera.lookAt(0.5, 0.5, 0.5)
-controls.target.set(.5, .5, .5)
-// controls.update()
+camera.lookAt(0.5, 3, 0.5)
+controls.target.set(.5, 3, .5)
+controls.update()
 
-// -- EVENT LISTENERS to orbitControll -- 
-controls.addEventListener('change', () => {
-    // -- info added to div dinamically (dont need to be updated on animate just onchange event)
-    info.innerText =
-    'Polar Angle : ' +
-    ((controls.getPolarAngle() / -Math.PI) * 180 + 90).toFixed(2) +
-    '°\nAzimuth Angle : ' +
-    ((controls.getAzimuthalAngle() / Math.PI) * 180).toFixed(2) +
-    '°'
-})
-controls.addEventListener('start', () => console.log("Controls Start Event"))
-controls.addEventListener('end', () => console.log("Controls End Event"))
+
 //-- autorotate --
-// controls.autoRotate = true
-// controls.autoRotateSpeed = 10
+controls.autoRotate = true
+controls.autoRotateSpeed = 1
 // -- smooth change when click up
 controls.enableDamping = true
 // -- Very slow change when click up
@@ -71,39 +73,57 @@ controls.touches = {
     ONE: THREE.TOUCH.ROTATE,
     TWO: THREE.TOUCH.DOLLY_PAN
 }
-// -- change grab to up and down
-// controls.screenSpacePanning = true
-// -- limit directional(azimuth) angle to move
-controls.minAzimuthAngle = 0
-controls.maxAzimuthAngle = Math.PI / 2 // 90
-controls.minPolarAngle = 0
-controls.maxPolarAngle = Math.PI // 180
-// -- min/max distance
-controls.maxDistance = 4
-controls.minDistance = 1.5
-// -- disable controls
-// controls.enabled = false
-// controls.enablePan = false
-// controls.enableRotate = false
-// controls.enableZoom = false
 
-const geometry = new THREE.BoxGeometry()
-const material = new THREE.MeshNormalMaterial({ wireframe: true })
+// const geometry = new THREE.BoxGeometry()
+// const material = new THREE.MeshNormalMaterial({ wireframe: true })
 
-const cube = new THREE.Mesh(geometry, material)
-scene.add(cube)
+// const cube = new THREE.Mesh(geometry, material)
+// scene.add(cube)
+const image = 'models/gold_flare.jpg'
+const material = new THREE.MeshPhysicalMaterial()
+material.map = new THREE.TextureLoader().load(image)
+material.envMapIntensity = 0.7
+material.roughness = 0.17
+material.metalness = 0.7
+material.clearcoat = 0.43
+material.iridescence = 0.1
+material.transmission = 1
+material.thickness = 5.12
+// material.ior = 0.78
 
-const stats = new Stats()
-document.body.appendChild(stats.dom)
+new GLTFLoader().load('models/egg.glb', (gltf) => {
+  gltf.scene.traverse((child) => {
+    ;(child as THREE.Mesh).material = material
+    // child.rotation.x = -Math.PI / 2
+  })
+  
+  scene.add(gltf.scene)
+  
+  const textureLoader = new THREE.TextureLoader()
+  const textureFlare0 = textureLoader.load('https://cdn.jsdelivr.net/gh/Sean-Bradley/First-Car-Shooter@main/dist/client/img/lensflare0.png')
+  const lensflare = new Lensflare()
+  lensflare.addElement(new LensflareElement(textureFlare0, 100000, 10))
+  light.add(lensflare)
+})
+scene.traverse((child) => {
+  console.log(child.children)
+})
+
+// const stats = new Stats()
+// document.body.appendChild(stats.dom)
 
 function animate() {
   requestAnimationFrame(animate)
-
+  
+  // scene.traverse((child) => {
+  //   child.rotation.y += 0.01
+  // })
+  
   controls.update()
 
   renderer.render(scene, camera)
 
-  stats.update()
+  // stats.update()
 }
 
 animate()
