@@ -31,34 +31,38 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight
   camera.updateProjectionMatrix()
   renderer.setSize(window.innerWidth, window.innerHeight)
-  //render() //this line is unnecessary if you are re-rendering within the animation loop
+  // render when resizing the aspect of the window
+  render() //this line is unnecessary if you are re-rendering within the animation loop
 })
 
 const controls = new OrbitControls(camera, renderer.domElement)
 controls.enableDamping = true
-//controls.addEventListener('change', render) //this line is unnecessary if you are re-rendering within the animation loop
+// render only when orbitControls are changing
+controls.addEventListener('change', render) //this line is unnecessary if you are re-rendering within the animation loop
 
 let suzanne: THREE.Mesh, plane: THREE.Mesh
 
 new GLTFLoader().load('models/suzanne_scene.glb', (gltf) => {
   suzanne = gltf.scene.getObjectByName('Suzanne') as THREE.Mesh
   suzanne.castShadow = true
-  ;((suzanne.material as THREE.MeshStandardMaterial).map as THREE.Texture).colorSpace = THREE.LinearSRGBColorSpace
+    ; ((suzanne.material as THREE.MeshStandardMaterial).map as THREE.Texture).colorSpace = THREE.LinearSRGBColorSpace
 
   plane = gltf.scene.getObjectByName('Plane') as THREE.Mesh
   plane.scale.set(50, 1, 50)
-  ;(plane.material as THREE.MeshStandardMaterial).envMap = scene.environment // since three@163, we need to set `envMap` before changing `envMapIntensity` has any effect.
-  ;(plane.material as THREE.MeshStandardMaterial).envMapIntensity = 0.05
+    ; (plane.material as THREE.MeshStandardMaterial).envMap = scene.environment // since three@163, we need to set `envMap` before changing `envMapIntensity` has any effect.
+    ; (plane.material as THREE.MeshStandardMaterial).envMapIntensity = 0.05
   plane.receiveShadow = true
 
   const spotLight = gltf.scene.getObjectByName('Spot') as THREE.SpotLight
   spotLight.intensity /= 500
   spotLight.castShadow = true
+  // Spotlight targeting suzanne
   spotLight.target = suzanne
 
   scene.add(gltf.scene)
 
-  //render()
+  // render after load the meshes
+  render()
 })
 
 const raycaster = new THREE.Raycaster()
@@ -69,63 +73,69 @@ renderer.domElement.addEventListener('dblclick', (e) => {
 
   raycaster.setFromCamera(mouse, camera)
 
-  const intersects = raycaster.intersectObjects([suzanne, plane], false)
+  // const intersects = raycaster.intersectObjects([suzanne, plane], false)
+  // intersect only the plane (raycaster get only the position of the plane)
+  const intersects = raycaster.intersectObjects([plane], false)
 
   if (intersects.length) {
     const p = intersects[0].point
 
-    controls.target.set(p.x, p.y, p.z)
+    // controls.target.set(p.x, p.y, p.z)
 
     //  Tweening controls.target
-    new TWEEN.Tween(controls.target)
-      .to(
-        {
-          x: p.x,
-          y: p.y,
-          z: p.z
-        },
-        500
-      )
-      .delay (1000)
-      .easing(TWEEN.Easing.Cubic.Out)
-      //.onUpdate(() => render())
-      .start()
-
-    // // slding x,z
-    // new TWEEN.Tween(suzanne.position)
+    // new TWEEN.Tween(controls.target)
     //   .to(
     //     {
     //       x: p.x,
+    //       y: p.y,
     //       z: p.z
     //     },
     //     500
     //   )
+    //   // .delay (1000)
+    //   .easing(TWEEN.Easing.Cubic.Out)
+    //   // render the screen only when animating
+    //   //.onUpdate(() => render())
     //   .start()
 
-    // // going up
-    // new TWEEN.Tween(suzanne.position)
-    //   .to(
-    //     {
-    //       y: p.y + 3
-    //     },
-    //     250
-    //   )
-    //   //.easing(TWEEN.Easing.Cubic.Out)
-    //   .start()
-    // //.onComplete(() => {
+    // // slding x,z
+    new TWEEN.Tween(suzanne.position)
+      .to(
+        {
+          x: p.x,
+          z: p.z
+        },
+        500
+      )
+      // render the screen only when animating
+      .onUpdate(() => render())
+      .start()
 
-    // // going down
-    // new TWEEN.Tween(suzanne.position)
-    //   .to(
-    //     {
-    //       y: p.y + 1
-    //     },
-    //     250
-    //   )
-    //   .delay(250)
-    //   //.easing(TWEEN.Easing.Cubic.In)
-    //   .start()
-    // //})
+    // going up
+    new TWEEN.Tween(suzanne.position)
+      .to(
+        {
+          y: p.y + 3
+        },
+        250
+      )
+      .easing(TWEEN.Easing.Cubic.Out)
+      .onUpdate(() => render())
+      .start()
+      .onComplete(() => {
+        // going down
+        new TWEEN.Tween(suzanne.position)
+          .to(
+            {
+              y: p.y + 1
+            },
+            250
+          )
+          // .delay(250)
+          .onUpdate(() => render())
+          .easing(TWEEN.Easing.Bounce.Out)
+          .start()
+      })
   }
 })
 
@@ -139,7 +149,8 @@ function animate() {
 
   TWEEN.update()
 
-  render()
+  // we are rendering only where is necessary
+  // render()
 
   stats.update()
 }
